@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WWEmote</title>
+<style>
+:root{
+  --bg:#e2eaf7; --card:#eef3fb; --edge:#d3dff2; --ink:#182338; --muted:#8792a5; --line:#e4e9f2;
+  --blue:#3d6fe8; --blue2:#2f5bd0; --ok:#18a058; --warn:#e0a300; --err:#d03050;
+}
+*{box-sizing:border-box}
+
+html,body{height:100%;overflow:hidden;border-radius:12px}
+
+body{margin:0;background:var(--bg);border-radius:12px;
+  font-family:Inter,"Segoe UI","Microsoft YaHei",sans-serif;color:var(--ink)}
+.card{height:100%;overflow:hidden;background:var(--card);border:1px solid var(--edge);border-radius:12px;
+  display:flex;flex-direction:column;position:relative}
+.bar{height:54px;display:flex;align-items:center;padding:0 22px;flex:none;
+  border-bottom:1px solid rgba(211,223,242,.9)}
+.brand-icon{width:20px;height:20px;border-radius:6px;object-fit:cover;flex:none;margin-right:12px}
+.brand{font-size:13px;font-weight:800;letter-spacing:.05em;color:#66738b}
+.spacer{flex:1}
+
+.quit{width:30px;height:30px;display:grid;place-items:center;padding:0;
+  border:1px solid var(--line);background:#fff;color:#7d8798;
+  font-size:17px;font-weight:600;line-height:1;border-radius:9px;cursor:pointer}
+.quit:hover{background:#fff5f6;border-color:#f3c6ce;color:#c04055}
+.quit:disabled{color:#c3cad6;cursor:default}
+.body{padding:36px 60px 30px;overflow:auto}
+.eyebrow{margin:0 0 14px;color:var(--blue);font-size:12px;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase}
+h1{margin:0;color:var(--ink);font-size:22px;line-height:1.4;font-weight:700}
+.intro{max-width:640px;margin:12px 0 26px;color:var(--muted);font-size:14px;line-height:1.7}
+.intro b{color:#46536c}
+.intro code{padding:1px 6px;border-radius:6px;background:#eef2fa;color:#3f4d66;
+  font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+.label{display:block;margin-bottom:9px;font-size:13px;font-weight:700;color:#46536c}
+.row{display:flex;gap:12px}
+.wrap{position:relative;flex:1}
+.wrap svg{position:absolute;top:17px;left:17px;width:20px;color:#8792a7}
+input{width:100%;height:54px;padding:0 18px 0 49px;border:1px solid var(--line);
+  border-radius:13px;outline:none;background:#fff;color:var(--ink);font-size:14px;
+  font-family:inherit}
+input:focus{border-color:#8aa5f5;box-shadow:0 0 0 4px #3769e81f}
+.wrap.dragover>input{border-color:#3d6fe8;box-shadow:0 0 0 4px #3769e83a;background:#f4f8ff}
+button{border:0;border-radius:13px;font:inherit;font-weight:700;cursor:pointer}
+.browse{min-width:158px;padding:0 18px;border:1px solid var(--line);
+  background:#d6e6ff;color:#45536d}
+.browse:hover{background:#f8faff;border-color:#b8c6ee}
+.actions{display:flex;align-items:center;gap:16px;margin-top:20px;flex-wrap:wrap}
+.options{display:flex;flex-direction:row;flex-wrap:wrap;gap:8px 22px;margin-top:12px}
+.options label{display:flex;align-items:center;gap:8px;font-size:12px;color:#5a6478;cursor:pointer;user-select:none}
+.options input[type=checkbox]{width:15px;height:15px;margin:0;accent-color:var(--blue);cursor:pointer;flex:none}
+.start{min-width:158px;height:50px;padding:0 24px;background:var(--blue);color:#fff;
+  font-size:15px;box-shadow:0 10px 24px rgba(61,111,232,.28)}
+.start:hover{background:var(--blue2)}
+.start:disabled{background:#b9c6e2;box-shadow:none;cursor:default}
+
+.start.alt{background:#e8efff;color:#2f5bd0;box-shadow:none;
+  border:1px solid #c3d4fb;font-size:14px}
+.start.alt:hover{background:#dbe7ff;border-color:#a9c0f8}
+.start.alt:disabled{background:#eef1f8;color:#9aa6bd;border-color:#e4e9f2;cursor:default}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;background:#c6cede;flex:none}
+.dot.live{background:var(--blue);animation:pulse 1.1s ease-in-out infinite}
+.dot.ok{background:var(--ok)}
+.dot.err{background:var(--err)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.meta{margin-top:22px}
+.steps{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.step{flex:1;min-width:130px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:12px;background:#fbfcff;font-size:12.5px;color:#98a2b5;font-weight:700}
+.step.on{border-color:#a9c0f8;background:#eef4ff;color:var(--blue)}
+.step.done{border-color:#b6e3c9;background:#effaf3;color:#12864a}
+.progress-head{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:13px;color:#5a677f}
+.progress-head .pv{font-weight:800;color:var(--blue)}
+.progress{height:9px;border-radius:99px;background:#e8edf7;overflow:hidden;margin-top:8px}
+.progress-bar{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#5b8def,#3d6fe8);transition:width .35s ease}
+.log{margin-top:18px;border:1px solid var(--line);border-radius:14px;background:#0f1626;
+  color:#c8d4ea;font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;
+  font-size:12px;line-height:1.55;max-height:230px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding:14px 16px;
+  white-space:pre-wrap;word-break:break-all}
+.log:empty{display:block;visibility:hidden}
+.body::-webkit-scrollbar,.log::-webkit-scrollbar,.result-slot::-webkit-scrollbar,.summary::-webkit-scrollbar,.errbox::-webkit-scrollbar{width:6px}
+.body::-webkit-scrollbar-thumb,.log::-webkit-scrollbar-thumb,.result-slot::-webkit-scrollbar-thumb,.summary::-webkit-scrollbar-thumb,.errbox::-webkit-scrollbar-thumb{background:#c7d2e6;border-radius:99px}
+.body::-webkit-scrollbar-track,.log::-webkit-scrollbar-track,.result-slot::-webkit-scrollbar-track,.summary::-webkit-scrollbar-track,.errbox::-webkit-scrollbar-track{background:transparent}
+.log .e{color:#ff8f9c}
+.log .ok{color:#7ee2a8}
+.log .cmd{color:#7fa7ff}
+.summary{margin-top:16px;border:1px solid #b6e3c9;background:#f2fbf6;border-radius:14px;
+  padding:14px 16px;font-size:13px;line-height:1.8;color:#155f38;display:none}
+.summary.show{display:block}
+.summary b{color:#0f7a43}
+.summary .fail{color:#a3273f}
+.errbox{margin-top:16px;border:1px solid #f3c6ce;background:#fff5f6;border-radius:14px;
+  padding:14px 16px;font-size:13px;line-height:1.75;color:#a3273f;display:none;
+  white-space:pre-wrap}
+.errbox.show{display:block}
+.foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;
+  gap:16px;flex-wrap:wrap}
+.lang{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted)}
+select{border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);
+  font:inherit;font-size:12px;padding:7px 10px}
+.hint{font-size:12px;color:#a3adbe}
+.hint.warn{color:#b8860b}
+
+.bar{height:42px;padding:0 14px}.brand-icon{width:18px;height:18px;margin-right:10px}
+.quit{width:25px;height:25px;border-radius:7px;font-size:16px}
+.body{padding:10px 18px 10px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.body>.topnote,.body>.compactline,.body>.options,.body>.meta{flex:none}
+.eyebrow,.body>h1,.body>.label{display:none}
+/* The report box absorbs all remaining height and scrolls on its own, so the
+   program panel never shows a side scrollbar in the initial state. */
+.result-slot{flex:1 1 auto;min-height:96px;position:relative;margin-top:10px;
+  display:flex;flex-direction:column;gap:8px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+.result-slot>.summary,.result-slot>.errbox{position:static;margin-top:0;max-height:none;overflow:visible;flex:none}
+/* Drag strips on the top and bottom edges resize the window vertically only;
+   width is locked in Go. 6px is enough to grab without eating the content. */
+.card>.resize-edge{position:absolute;left:0;right:0;height:6px;cursor:ns-resize;z-index:5;touch-action:none}
+.card>.resize-edge.top{top:0}
+.card>.resize-edge.bottom{bottom:0}
+
+.compactline{display:flex;align-items:end;gap:8px}.compactline>.row{flex:1;min-width:0}
+.topnote{margin:0 0 7px;color:#71809a;font-size:11px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row{gap:8px}.wrap svg{top:9px;left:12px;width:16px}
+input{height:34px;padding-left:38px;border-radius:9px;font-size:12px}
+.browse{height:34px;min-width:74px;padding:0 12px;border-radius:9px;font-size:12px}
+.actions{margin-top:0;gap:10px;flex:none}.start{min-width:78px;height:34px;padding:0 14px;border-radius:9px;font-size:12px;box-shadow:none}
+.status{font-size:11px;white-space:nowrap}.dot{width:7px;height:7px}
+.meta{margin-top:8px}.steps{display:none}.progress-head{font-size:11px}.progress{height:6px;margin-top:4px}
+.log{margin-top:8px;height:60px;max-height:60px;padding:7px 9px;border-radius:8px;font-size:10px;line-height:1.4}
+.foot>.diaglink{margin-right:auto;font-size:11px;color:#9aa0aa;cursor:pointer;text-decoration:none;border:0;background:none;padding:0;font-family:inherit}
+.foot>.diaglink:hover{color:#5a6070;text-decoration:underline}
+.summary,.errbox{margin-top:0;padding:8px 10px;border-radius:8px;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.summary.show{display:flex;flex-direction:column;gap:5px}
+.summary>div{padding:5px 8px;border:1px solid #d8eadf;border-radius:6px;background:#fbfefc;overflow-wrap:anywhere}
+.summary .lead{font-weight:800}
+.summary .detail{display:block;margin-top:2px;font-size:10.5px;font-weight:400;color:#64718a;line-height:1.45;overflow-wrap:anywhere}
+.summary>.fail{border-color:#f0c4cc;background:#fff5f6;color:#9b2138;font-weight:700;padding:7px 9px}
+.summary>.fail .detail{margin-top:6px;color:#814250}
+.summary>.fail .err-item{display:block;position:relative;margin:0;padding:5px 8px 5px 18px;
+  border-bottom:1px dashed #f0cdd4;line-height:1.45;overflow-wrap:anywhere;font-weight:400;color:#7a3f4b}
+.summary>.fail .err-item:last-child{border-bottom:0}
+.summary>.fail .err-item::before{content:"";position:absolute;left:5px;top:11px;width:5px;height:5px;
+  border-radius:50%;background:#d03050}
+.summary>.fail .err-item b{display:inline-block;margin-right:6px;padding:0 5px;border-radius:4px;
+  background:#fbe3e7;color:#9b2138;font-size:10px;font-weight:800}
+.summary>.fail .err-item .path{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;
+  font-size:10px;color:#6b3440}
+.summary>.fail .err-item .why{color:#8a505b}
+.summary>.fail::before{content:"!";display:inline-grid;place-items:center;width:14px;height:14px;margin-right:7px;
+  border-radius:50%;background:#d03050;color:#fff;font-size:10px;line-height:1;vertical-align:1px}
+/* "configured this run" row: same per-item layout as the failure box, green. */
+.summary>.ok{border-color:#b6e3c9;background:#f4fcf7;color:#0f7a43;font-weight:700;padding:7px 9px}
+.summary>.ok .detail{margin-top:6px;color:#356149}
+.summary>.ok .err-item{display:block;position:relative;margin:0;padding:5px 8px 5px 18px;
+  border-bottom:1px dashed #cde9d8;line-height:1.45;overflow-wrap:anywhere;font-weight:400;color:#2f5a45}
+.summary>.ok .err-item:last-child{border-bottom:0}
+.summary>.ok .err-item::before{content:"";position:absolute;left:5px;top:11px;width:5px;height:5px;
+  border-radius:50%;background:#12a150}
+.summary>.ok .err-item b{display:inline-block;margin-right:6px;padding:0 5px;border-radius:4px;
+  background:#e3f6ea;color:#0f7a43;font-size:10px;font-weight:800}
+.summary>.ok .err-item .path{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;
+  font-size:10px;color:#3c6b55}
+.summary>.ok::before{content:"\2713";display:inline-grid;place-items:center;width:14px;height:14px;margin-right:7px;
+  border-radius:50%;background:#12a150;color:#fff;font-size:10px;line-height:1;vertical-align:1px}
+.foot{flex:none;display:flex;justify-content:flex-end;margin-top:auto;padding-top:10px;gap:18px}.foot>.hint{display:none}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="resize-edge top" id="resizeTop"></div>
+  <div class="resize-edge bottom" id="resizeBottom"></div>
+
+  <header class="bar pywebview-drag-region">
+    <img class="brand-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADUklEQVR4nCWRS1McVQCFv3v7dvdMT88AM4BtGAgolVhJiDGi8UFZpRFxi4us3LpykY2/wHLhwk3+gBtXlitdabAoBIpECokGNSSRSqYEMjPAPJkH/boW49mfR31HAPz8/XeXh6zSVxPT8zOprJdoNtrCtE0MKdj68xFSGriOot480WNjXtdNJVdTqdRnQoj7Qms9Vdwt3I7Kd72Dps3o1Hv096UwDIPDwwpKmaTTDg9+XSA3/gphpMnnPerVSrH4ZPMD2Wm3brUrz7zlxZVQqyR9/Wk0kjCMGchm6e9P98JGL7xBbnCA/MhzRFEUOk7Sa1f2b8mD8tHM0z9+0kNjF9XUm3PoGHw/pNP1e22dbkgM1A5rNKpNYilACGUlktrO5GdkvRmYjbBfjE5dJwwiDEMQBj6WaWAqQRxHp5hQx01oHxNGMVEYEUVa5C9cM6VWCXIvzSLNJJYpQWvCIMCyTRrVKge7u+gownESOGmXTq1Os1IFNMmEjdxY/Jbq3jZuKtVrCoIAI+EQNltUH+8gj485eLyDk3KQiQTxSZdKoUCr3YU4Ro07+9QaAgzjf7MyWPn6GxaXlxCmyaUXJrhxYx4jaXO0t49fr5PLuLRqDYxsP7JQyzA0cZWhXAapFM3CLvsPHzKdf5GPRB8jgYHlDWHomIGMw8IPP/LF51+yc3uxx0N5k9Ncee0a9XqLXNYl5Q3z8aef4C+ukRiuoi9fxJQSuic9Pm9LB9vIcOeXZc6//w7q3dnrHBwe02p3egHasoj9LpmJM8SZcxjDOXSni7Bt4nqDs6+eYyQ/yF3TIlQKtfH7DlGtgqUk/oSHOP3cSmBPjmNKA21bkLCJYo2VTiOuTGE+ekKm4zPgDaPKpVLgH7cU7YaITMVbM9Moy+ao1cTLP9+bLYQgOumgTBNcl2g8Tz5GN2uNUI6OnV0d9IZFoMKw7Ws27j1ke32dgYwLp4ZTaY3lpkBKRNqldOKHT8sN8eDvwqrcOzJvhuXNYp/ZVsmUy+TEGbb/3WNtZZ2TSgWhVO9i4ghpKQ5KhyytLqlSuVQ8f+nlm3J+dmyrVK7MJb2rC1Hod7K5tH599kOKzYDdO+vsbd6ndVghiGJ+2/xLr937p+Nm+hYyZm3Oy4qt/wD3LYMEQkY/yQAAAABJRU5ErkJggg==" alt="">
+    <span class="brand" id="brand">WWEmote</span>
+    <span class="spacer"></span>
+
+    <button class="quit" id="quit" title="关闭" aria-label="关闭">&#215;</button>
+  </header><section class="body">
+    <p class="eyebrow" id="eyebrow">本地 mod 表情面板</p>
+    <h1 id="heading">选择 Mods 目录，配置表情面板适配</h1>
+
+    <div class="topnote" id="topnote">选择本地mods地址，使服装mod与本mod兼容</div>
+    <div class="compactline">
+    <div class="row">
+      <div class="wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2l1.6 2h8.2A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5Z"></path>
+        </svg>
+        <input id="address" placeholder="Mods 目录或其中某个 mod 文件夹的完整路径" autocomplete="off">
+      </div>
+      <button class="browse" id="browse">选择</button>
+    </div>
+
+    <div class="actions">
+      <button class="start" id="start">开始配置</button>
+      <div class="status"></div>
+    </div>
+    </div>
+
+    <div class="options">
+      <label><input type="checkbox" id="optIgnoreDisabled"><span id="optIgnoreDisabledLabel">忽略对 DISABLED_ 状态 mod 配置</span></label>
+      <label><input type="checkbox" id="optCleanStale"><span id="optCleanStaleLabel">删除失效配置文件</span></label>
+    </div>
+
+    <div class="meta">
+      <div class="steps"></div>
+      <div class="progress-head"><span id="progressText">准备就绪</span>
+        <span class="pv" id="progressValue">0%</span></div>
+      <div class="progress"><span class="progress-bar" id="progressBar"></span></div>
+    </div>
+
+    <div class="result-slot">
+      <div class="summary" id="summary"></div>
+      <div class="errbox" id="errbox"></div>
+    </div>
+
+    <div class="foot">
+      <span class="hint" id="hint"></span>
+      <span class="hint" id="loghint"></span>
+      <button class="diaglink" id="diagbtn" type="button">Diagnostics</button>
+      <label class="lang"><span id="languageLabel">Language</span>
+        <select id="language">
+          <option value="en" selected>English</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+          <option value="zh-CN">简体中文</option>
+          <option value="zh-TW">繁體中文</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+
+  var addr = $("address"), browse = $("browse"), start = $("start"),
+      dot = $("dot"),
+      statustext = $("statustext"),
+      bar = $("progressBar"),
+      pv = $("progressValue"), pt = $("progressText"), logEl = $("log"),
+      sumEl = $("summary"), errEl = $("errbox"), hint = $("hint"),
+      loghint = $("loghint"), language = $("language"),
+      diagbtn = $("diagbtn"),
+      steps = [$("s0"), $("s1"), $("s2")].filter(function (el) { return !!el; }),
+      quitBtn = $("quit"), brand = $("brand"), topnote = $("topnote"),
+      languageLabel = $("languageLabel"),
+      eyebrow = $("eyebrow"), heading = $("heading"),
+      optIgnore = $("optIgnoreDisabled"), optClean = $("optCleanStale"),
+      optIgnoreLabel = $("optIgnoreDisabledLabel"), optCleanLabel = $("optCleanStaleLabel");
+
+  var STEPS_FALLBACK = {
+    config: ["① 检查面板本体", "② 扫描并写入面板目录", "③ 复核改动范围"]
+  };
+  var job = null, phaseLabel = null;
+
+  var running = false, lastLogLen = 0, primed = false;
+  var lastSummary = null;
+  var currentLanguage = "en", lastState = "idle";
+  // A local error (bad path, offline, quit failure) is shown immediately from
+  // the API response, before the backend state machine ever enters "error".
+  // The poll must not clear it just because state is still "idle" -- that made
+  // the red box flash for one frame. It persists until the next real run or a
+  // backend "done"/"error" state takes over.
+  var stickyError = "";
+
+  function showError(text) {
+    stickyError = text || "";
+    if (errEl) {
+      errEl.textContent = stickyError ? "✗ " + stickyError : "";
+      errEl.className = stickyError ? "errbox show" : "errbox";
+    }
+  }
+
+  function api(path, body) {
+    return fetch(path, {
+      method: body === undefined ? "GET" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+    });
+  }
+
+  function reportJs(msg, src, line, stack) {
+    try {
+      api("/api/js-error", {
+        msg: String(msg || "").slice(0, 400),
+        src: String(src || "").slice(0, 200),
+        line: line || 0,
+        stack: String(stack || "").slice(0, 1500)
+      }).catch(function () {});
+    } catch (_) {}
+  }
+  window.addEventListener("error", function (e) {
+    reportJs(e.message || "error", e.filename, e.lineno,
+             e.error && e.error.stack);
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e.reason;
+    reportJs("unhandledrejection: " + (r && r.message ? r.message : String(r)),
+             "", 0, r && r.stack);
+  });
+
+  function showBox(text) {
+    if (!errEl) return;
+    errEl.textContent = text || "";
+    errEl.className = "errbox" + (text ? " show" : "");
+  }
+
+  function copyText(s) {
+    function legacy() {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = s;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch (_) { return false; }
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(s).then(
+          function () { return true; },
+          function () { return legacy(); });
+      }
+    } catch (_) {}
+    return Promise.resolve(legacy());
+  }
+
+  if (diagbtn) diagbtn.onclick = function () {
+    var t = LANG[currentLanguage] || LANG["zh-CN"];
+    diagbtn.disabled = true;
+    diagbtn.textContent = t.diagBusy;
+    api("/api/diag-bundle", { mods: (addr && addr.value) || "" })
+      .then(function (r) {
+        diagbtn.disabled = false;
+        diagbtn.textContent = t.diag;
+        if (!r || !r.ok) {
+          showBox("✗ " + ((r && r.error) || "?"));
+          return;
+        }
+        copyText(r.summary || "").then(function (ok) {
+          showBox((ok ? t.diagCopied + " " : "") + t.diagDone + r.path);
+        });
+      })
+      .catch(function (e) {
+        diagbtn.disabled = false;
+        diagbtn.textContent = t.diag;
+        showBox(t.diagFail + e);
+      });
+  };
+
+  function renderLog(lines) {
+    if (!logEl) return;
+    if (!lines.length) { logEl.textContent = ""; lastLogLen = 0; return; }
+
+    var compact = lines;
+    if (compact.length < lastLogLen) lastLogLen = 0;
+    var stickToBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 8;
+    var html = "";
+    for (var i = lastLogLen; i < compact.length; i++) {
+      var t = compact[i], cls = "";
+      if (t.indexOf("✗") === 0) cls = "e";
+      else if (t.indexOf("✓") === 0) cls = "ok";
+      else if (t.indexOf("$ ") === 0) cls = "cmd";
+      html += '<span class="' + cls + '">' + esc(t) + "</span>\n";
+    }
+    lastLogLen = compact.length;
+    logEl.insertAdjacentHTML("beforeend", html);
+
+    if (stickToBottom) logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  var LANG = {
+    "zh-CN": { browse:"选择", start:"开始配置", running:"配置中…", reconfigure:"重新配置", close:"关闭", ready:"准备就绪", ph:"Mods 目录或某个 mod 文件夹的完整路径（只配置该文件夹）", language:"语言", topnote:"选择本地mods地址或拖动文件夹到地址栏", disconnected:"与后端失联（服务可能已退出）", noDialog:"系统目录对话框没能打开", paste:"请直接把路径粘贴到上面的输入框。", noBackend:"没能连上后端，请手动把路径粘贴到上面的输入框。", root:"⚠ 找不到面板文件（缺 WWEmote.ini 或 chars/）", eyebrow:"本地 mod 表情面板", heading:"选择 Mods 目录，配置表情面板适配", offline:"✗ 没能连上后端：", closeFail:"✗ 关闭失败：", log:"日志：", step:"步骤 ", phases:["① 检查面板本体","② 扫描并写入 user 层","③ 复核改动范围"], diag:"诊断", diagBusy:"诊断中…", diagDone:"已导出：", diagFail:"导出失败：", diagCopied:"诊断报告已复制（已去除本机路径），直接粘贴给作者即可。", dropFileOnly:"只接受文件夹，请拖入一个文件夹。", dropNoBridge:"当前环境无法读取拖入路径，请用「选择」或粘贴路径。", dropFail:"没能读取拖入的文件夹路径，请用「选择」重试。", dropReading:"正在读取文件夹路径…", optIgnoreDisabled:"忽略对 DISABLED_ 状态 mod 配置", optCleanStale:"删除失效配置文件" },
+    "zh-TW": { browse:"選擇", start:"開始設定", running:"設定中…", reconfigure:"重新設定", close:"關閉", ready:"準備就緒", ph:"Mods 目錄或某個 mod 資料夾的完整路徑（只設定該資料夾）", language:"語言", topnote:"選擇本地mods位址或拖曳資料夾到網址列", disconnected:"與後端失聯（服務可能已退出）", noDialog:"系統目錄對話框無法開啟", paste:"請直接將路徑貼到上方輸入框。", noBackend:"無法連接後端，請手動將路徑貼到上方輸入框。", root:"⚠ 找不到面板檔案（缺 WWEmote.ini 或 chars/）", eyebrow:"本機 mod 表情面板", heading:"選擇 Mods 目錄，設定表情面板適配", offline:"✗ 無法連線後端：", closeFail:"✗ 關閉失敗：", log:"日誌：", step:"步驟 ", phases:["① 檢查面板本體","② 掃描並寫入使用者層","③ 複核變更範圍"], diag:"診斷", diagBusy:"診斷中…", diagDone:"已匯出：", diagFail:"匯出失敗：", diagCopied:"診斷報告已複製（已去除本機路徑），直接貼給作者即可。", dropFileOnly:"只接受資料夾，請拖入一個資料夾。", dropNoBridge:"當前環境無法讀取拖入路徑，請用「選擇」或貼上路徑。", dropFail:"無法讀取拖入的資料夾路徑，請用「選擇」重試。", dropReading:"正在讀取資料夾路徑…", optIgnoreDisabled:"忽略對 DISABLED_ 狀態 mod 設定", optCleanStale:"刪除失效設定檔" },
+    "en": { browse:"Browse", start:"Configure", running:"Configuring…", reconfigure:"Reconfigure", close:"Close", ready:"Ready", ph:"Mods folder, or a mod folder inside it (configures only that folder)", language:"Language", topnote:"Select your local mods folder or drag a folder into the address bar", disconnected:"Backend disconnected (the service may have exited)", noDialog:"The system folder dialog could not be opened", paste:"Please paste the path into the input above.", noBackend:"Could not connect to the backend. Please paste the path into the input above.", root:"⚠ Panel files not found (missing WWEmote.ini or chars/)", eyebrow:"Local mod emote panel", heading:"Select the Mods folder to configure the emote panel", offline:"✗ Could not reach the backend: ", closeFail:"✗ Failed to close: ", log:"Log: ", step:"Step ", phases:["① Check the panel core","② Scan and write the user layer","③ Verify the change scope"], diag:"Diagnostics", diagBusy:"Diagnosing...", diagDone:"Exported: ", diagFail:"Export failed: ", diagCopied:"Sanitized report copied (local paths removed) - paste it to the author.", dropFileOnly:"Only folders are accepted - drop a folder.", dropNoBridge:"This environment cannot read dropped paths. Use Browse or paste the path.", dropFail:"Could not read the dropped folder path. Try Browse again.", dropReading:"Reading folder path...", optIgnoreDisabled:"Ignore DISABLED_ mods", optCleanStale:"Remove stale config files" },
+    "ja": { browse:"選択", start:"設定開始", running:"設定中…", reconfigure:"再設定", close:"閉じる", ready:"準備完了", ph:"Mods フォルダーまたはその中の mod フォルダー（そのフォルダーのみ設定）", language:"言語", topnote:"ローカルのmodsフォルダーを選択するか、フォルダーをアドレスバーにドラッグしてください", disconnected:"バックエンドに接続できません（サービスが終了した可能性があります）", noDialog:"システムのフォルダー選択ダイアログを開けませんでした", paste:"上の入力欄にパスを貼り付けてください。", noBackend:"バックエンドに接続できません。上の入力欄にパスを貼り付けてください。", root:"⚠ パネル本体が見つかりません（WWEmote.ini または chars/ がありません）", eyebrow:"ローカル mod 表情パネル", heading:"Mods フォルダーを選択して表情パネルを設定", offline:"✗ バックエンドに接続できません：", closeFail:"✗ 終了できませんでした：", log:"ログ：", step:"ステップ ", phases:["① パネル本体を確認","② ユーザー層をスキャンして書き込み","③ 変更範囲を確認"], diag:"診断", diagBusy:"診断中…", diagDone:"書き出しました：", diagFail:"書き出し失敗：", diagCopied:"診断レポートをコピーしました（ローカルパスは除去済み）。作者に貼り付けてください。", dropFileOnly:"フォルダーのみ対応しています。フォルダーをドロップしてください。", dropNoBridge:"この環境ではドロップしたパスを読み取れません。「選択」または貼り付けをご利用ください。", dropFail:"ドロップしたフォルダーのパスを読み取れませんでした。「選択」でやり直してください。", dropReading:"フォルダーのパスを読み取り中…", optIgnoreDisabled:"DISABLED_ 状態の mod を無視する", optCleanStale:"無効な設定ファイルを削除" },
+    "ko": { browse:"선택", start:"구성 시작", running:"구성 중…", reconfigure:"다시 구성", close:"닫기", ready:"준비 완료", ph:"Mods 폴더 또는 그 안의 mod 폴더 경로(해당 폴더만 구성)", language:"언어", topnote:"로컬 mods 폴더를 선택하거나 폴더를 주소 표시줄로 끌어다 놓으세요", disconnected:"백엔드 연결이 끊겼습니다(서비스가 종료되었을 수 있음)", noDialog:"시스템 폴더 대화 상자를 열 수 없습니다", paste:"위 입력란에 경로를 붙여 넣으세요.", noBackend:"백엔드에 연결할 수 없습니다. 위 입력란에 경로를 붙여 넣으세요.", root:"⚠ 패널 파일을 찾을 수 없습니다(WWEmote.ini 또는 chars/ 누락)", eyebrow:"로컬 mod 표정 패널", heading:"Mods 폴더를 선택하여 표정 패널 구성", offline:"✗ 백엔드에 연결하지 못했습니다: ", closeFail:"✗ 종료 실패: ", log:"로그: ", step:"단계 ", phases:["① 패널 본체 확인","② 사용자 계층 스캔 및 기록","③ 변경 범위 확인"], diag:"진단", diagBusy:"진단 중…", diagDone:"내보냄: ", diagFail:"내보내기 실패: ", diagCopied:"진단 보고서가 복사되었습니다(로컬 경로 제거됨). 작성자에게 붙여넣으세요.", dropFileOnly:"폴더만 허용됩니다. 폴더를 끌어다 놓으세요.", dropNoBridge:"이 환경에서는 끌어다 놓은 경로를 읽을 수 없습니다. '선택' 또는 붙여넣기를 사용하세요.", dropFail:"끌어다 놓은 폴더 경로를 읽지 못했습니다. '선택'으로 다시 시도하세요.", dropReading:"폴더 경로를 읽는 중…", optIgnoreDisabled:"DISABLED_ 상태 mod 무시", optCleanStale:"유효하지 않은 설정 파일 삭제" }
+  };
+
+  function trMessage(message) {
+    var t = LANG[currentLanguage] || LANG["zh-CN"], m = String(message || "");
+    if (!m || m === "准备就绪") return t.ready;
+    if (m === "配置完成") {
+      return {"zh-CN":"配置完成","zh-TW":"設定完成",en:"Configuration complete",ja:"設定完了",ko:"구성 완료"}[currentLanguage] || "Configuration complete";
+    }
+    if (m === "检查完成") {
+      return {"zh-CN":"检查完成","zh-TW":"檢查完成",en:"Check complete",ja:"確認完了",ko:"확인 완료"}[currentLanguage] || "Check complete";
+    }
+    if (m === "更新完成") {
+      return {"zh-CN":"更新完成","zh-TW":"更新完成",en:"Update complete",ja:"更新完了",ko:"업데이트 완료"}[currentLanguage] || "Update complete";
+    }
+    // Phase lines already arrive localised from the Go side via T(), so show
+    // them as-is. The step strip uses LANG[].phases separately (setStepText).
+    return m;
+  }
+
+  function applyLanguage(code) {
+    var t = LANG[code] || LANG["zh-CN"];
+    currentLanguage = LANG[code] ? code : "zh-CN";
+    document.documentElement.lang = code;
+    document.title = "WWEmote";
+    if (brand) brand.textContent = "WWEmote";
+    if (eyebrow) eyebrow.textContent = t.eyebrow;
+    if (heading) heading.textContent = t.heading;
+    if (topnote) topnote.textContent = t.topnote;
+    if (browse) browse.textContent = t.browse;
+    if (start && !running) start.textContent = lastState === "done" ? t.reconfigure : t.start;
+    if (quitBtn) { quitBtn.title = t.close; quitBtn.setAttribute("aria-label", t.close); }
+    if (addr) addr.placeholder = t.ph;
+    if (optIgnoreLabel && t.optIgnoreDisabled) optIgnoreLabel.textContent = t.optIgnoreDisabled;
+    if (optCleanLabel && t.optCleanStale) optCleanLabel.textContent = t.optCleanStale;
+    if (diagbtn && !diagbtn.disabled) diagbtn.textContent = t.diag;
+
+    if (pt && !running) {
+      if (lastState === "done") pt.textContent = trMessage("配置完成");
+      else if (!pt.textContent || pt.textContent === "准备就绪" || pt.textContent === "Ready") pt.textContent = t.ready;
+    }
+    if (sumEl && lastSummary) sumEl.innerHTML = renderSummary(lastSummary);
+    try { localStorage.setItem("wwemote-language", code); } catch (_) {}
+  }
+
+  function setStepText(j) {
+
+    var arr = ((LANG[currentLanguage] || LANG["zh-CN"]).phases && j === "config")
+              ? (LANG[currentLanguage] || LANG["zh-CN"]).phases
+              : ((phaseLabel && phaseLabel[j]) || STEPS_FALLBACK[j])
+              || STEPS_FALLBACK.config;
+    steps.forEach(function (el, i) {
+      el.textContent = arr[i] || ((LANG[currentLanguage] || LANG["zh-CN"]).step + (i + 1));
+    });
+  }
+
+  function setSteps(phaseIndex, state) {
+    steps.forEach(function (el, i) {
+      el.className = "step";
+      if (state === "running") {
+        if (i < phaseIndex) el.className = "step done";
+        else if (i === phaseIndex) el.className = "step on";
+      } else if (state === "done") {
+        el.className = "step done";
+      }
+    });
+  }
+
+  function setBusy(isRun, j, state) {
+    var t = LANG[currentLanguage] || LANG["zh-CN"];
+    lastState = state || lastState;
+
+    if (start) start.disabled = isRun;
+    if (isRun) {
+      if (start) start.textContent = t.running;
+    } else {
+      if (start) start.textContent = (j === "config" && state === "done")
+        ? t.reconfigure : t.start;
+    }
+    if (browse) browse.disabled = isRun;
+    if (addr) addr.disabled = isRun;
+  }
+
+  function apply(s) {
+    lastState = s.state || lastState;
+    if (bar) bar.style.width = (s.pct || 0) + "%";
+    if (pv) pv.textContent = (s.pct || 0) + "%";
+    if (pt) pt.textContent = trMessage(s.message);
+    if (statustext) statustext.textContent = trMessage(s.message);
+    if (dot) {
+      dot.className = "dot";
+      if (s.state === "running") dot.className = "dot live";
+      else if (s.state === "done") dot.className = "dot ok";
+      else if (s.state === "error" || s.state === "cancelled") dot.className = "dot err";
+    }
+
+    var j = s.job || job || "config";
+    if (s.phase_label) phaseLabel = s.phase_label;
+    if (j !== job) { job = j; setStepText(j); }
+
+    var isRun = s.state === "running";
+    if (isRun !== running || s.state === "done") {
+      running = isRun;
+      setBusy(isRun, j, s.state);
+    }
+    setSteps(s.phase_index, s.state);
+
+    renderLog(s.log || []);
+
+    if (sumEl) {
+      if (s.state === "done" && s.summary) {
+        lastSummary = s.summary;
+        sumEl.innerHTML = renderSummary(s.summary);
+        sumEl.className = "summary show";
+      } else {
+        if (s.state !== "done") lastSummary = null;
+        sumEl.className = "summary";
+      }
+    }
+
+    if (errEl) {
+      // A sticky local error lives until a real run starts (runJob clears it)
+      // or the backend reports its own error/cancelled. A stale "done" from an
+      // earlier run must NOT clear it -- that made path-validation errors
+      // flash for one frame. backend setIdle() handles the normal case; this
+      // guard also covers races and offline failures where no run ever starts.
+      if (s.error && (s.state === "error" || s.state === "cancelled")) {
+        stickyError = ""; // backend owns the error now
+        errEl.textContent = "✗ " + s.error;
+        errEl.className = "errbox show";
+      } else if (stickyError) {
+        errEl.textContent = "✗ " + stickyError;
+        errEl.className = "errbox show";
+      } else if (s.state === "done") {
+        errEl.className = "errbox";
+      }
+    }
+  }
+
+  function localizeNames(s) {
+    // Must run before the bare Hsin rule, or the suffix survives in Chinese.
+    s = s.replace(/心大招/g, "hsinult");
+    if (currentLanguage === "en" || currentLanguage === "ja" || currentLanguage === "ko") {
+      s = s.replace(/穗穗/g, "Suisui").replace(/绯雪/g, "Hiyuki").replace(/心/g, "Hsin");
+    }
+    if (currentLanguage === "en") s = s.replace(/套/g, " sets");
+    else if (currentLanguage === "ja") s = s.replace(/套/g, "セット");
+    else if (currentLanguage === "ko") s = s.replace(/套/g, "세트");
+    return s;
+  }
+
+  // A failure payload joins independent per-set errors with " · ". Render
+  // each one as its own block so a long list stays scannable.
+  function failureItemHtml(item) {
+    var m = item.match(/^([^:]+):\s*(.*)$/);
+    var who = m ? m[1] : "";
+    var rest = m ? m[2] : item;
+    var seg = rest.split(": ");
+    var path = seg.length > 1 ? seg.shift() : "";
+    var why = seg.join(": ");
+    return '<span class="err-item">'
+      + (who ? "<b>" + esc(who) + "</b>" : "")
+      + (path ? '<span class="path">' + esc(path) + "</span> " : "")
+      + '<span class="why">' + esc(why) + "</span></span>";
+  }
+
+  // A configured mod: owner + its ini path, no "why" segment.
+  function okItemHtml(item) {
+    var m = item.match(/^([^:]+):\s*(.*)$/);
+    var who = m ? m[1] : "";
+    var path = m ? m[2] : item;
+    return '<span class="err-item">'
+      + (who ? "<b>" + esc(who) + "</b>" : "")
+      + (path ? '<span class="path">' + esc(path) + "</span>" : "")
+      + "</span>";
+  }
+
+  // Summary payloads are "lead —— detail". Keep the lead short and bold, and
+  // put mod lists / reasons in a smaller block so a long failure does not turn
+  // the whole report into one wall of red text.
+  function summaryRow(text, cls) {
+    var parts = String(text).split(" —— ");
+    var lead = esc(parts.shift());
+    var detail = "";
+    if (parts.length) {
+      var body = parts.join(" —— ");
+      if (cls === "fail" || cls === "ok") {
+        var items = body.split(" · ");
+        var lines = "";
+        for (var i = 0; i < items.length; i++) {
+          lines += (cls === "fail" ? failureItemHtml(items[i]) : okItemHtml(items[i]));
+        }
+        detail = '<span class="detail">' + lines + "</span>";
+      } else {
+        detail = '<span class="detail">' + esc(body) + "</span>";
+      }
+    }
+    return '<div' + (cls ? ' class="' + cls + '"' : "")
+      + '><span class="lead">' + lead + "</span>" + detail + "</div>";
+  }
+
+  function renderSummary(y) {
+    var r = {
+      done: {"zh-CN":"完成。","zh-TW":"完成。",en:"Completed.",ja:"完了しました。",ko:"완료되었습니다."}[currentLanguage]
+    };
+    var rows = [];
+    if (y.added) {
+      var added = String(y.added);
+      var zeroAdded = {"zh-CN":"本次无新增（0 套）","zh-TW":"本次無新增（0 套）",en:"No new sets this run",ja:"今回の新規追加なし",ko:"이번 실행에서 새로 추가된 세트 없음"}[currentLanguage] || "No new sets this run";
+      if (added === "新增 0 套") {
+        added = zeroAdded;
+      } else {
+        var addedLabel = {"zh-CN":"本次新增 $1 套","zh-TW":"本次新增 $1 套",en:"$1 newly added sets",ja:"新規追加 $1 セット",ko:"새로 추가된 세트 $1개"}[currentLanguage] || "$1 newly added sets";
+        added = added.replace(/^新增 (\d+) 套/, addedLabel);
+        added = localizeNames(added);
+      }
+      rows.push(summaryRow(added));
+    }
+    // Independent if, never else-if: y.added is always non-empty, so an
+    // else-if chain here used to silently drop adapted (the added/adapted trap).
+    if (y.adapted) {
+      var adapted = String(y.adapted);
+      var countLabel = {"zh-CN":"个角色已适配","zh-TW":"個角色已適配",en:" characters adapted",ja:"人のキャラクターを適用",ko:"개 캐릭터 적용"}[currentLanguage] || " characters adapted";
+      adapted = adapted.replace(/^(\d+)\s*个角色已适配/, "$1" + countLabel);
+      adapted = localizeNames(adapted);
+      rows.push(summaryRow(adapted));
+    }
+    // staged reports deltas written to user/ that took no effect this run
+    // because the mod is not loaded. The reason lives in the localised label
+    // so no Chinese leaks into non-CN clients; the payload stays a bare count.
+    // Per-set failures used to exist only in the rolling log, so the visible
+    // result showed only successes. Independent if: a partial config has both
+    // wins and failures, and hiding either one is misleading.
+    // ok names the mods this run configured, one row per mod file. Same item
+    // layout as the failure box (bullet + owner + path) so the two read as one
+    // report: what got done, then what did not.
+    if (y.ok) {
+      var ok = String(y.ok);
+      var okLabel = {"zh-CN":"套已配置（本次生效）","zh-TW":"套已設定（本次生效）",en:" sets configured (active now)",ja:"セット設定済み（今回有効）",ko:"세트 설정 완료(이번에 적용)"}[currentLanguage] || " sets configured (active now)";
+      ok = ok.replace(/^(\d+)\s*套已配置/, "$1" + okLabel);
+      rows.push(summaryRow(ok, "ok"));
+    }
+    if (y.failed) {
+      var failed = String(y.failed);
+      var failedLabel = {"zh-CN":"套未配置（失败 mod）","zh-TW":"套未設定（失敗 mod）",en:"sets not configured (failed mods)",ja:"セット未設定（失敗した mod）",ko:"세트 미설정(실패 mod)"}[currentLanguage] || "sets not configured (failed mods)";
+      failed = failed.replace(/^(\d+)\s*套未配置/, "$1" + failedLabel);
+      rows.push(summaryRow(failed, "fail"));
+    }
+    if (y.staged) {
+      var staged = String(y.staged);
+      var stagedLabel = {"zh-CN":"已生成 $1 套储备数据（mod 未加载，暂不生效）","zh-TW":"已生成 $1 套儲備數據（mod 未載入，暫不生效）",en:"$1 sets of reserve data generated (mod not loaded, inactive for now)",ja:"mod が未ロードのため、$1 セットの予備データを生成（当面は未適用）",ko:"mod가 로드되지 않아 예비 데이터 $1세트 생성 (현재는 미적용)"}[currentLanguage] || "$1 sets of reserve data generated (mod not loaded, inactive for now)";
+      staged = staged.replace(/^已生成 (\d+) 套储备数据/, stagedLabel);
+      staged = localizeNames(staged);
+      rows.push(summaryRow(staged));
+    }
+    if (y.inactive) {
+      var inactive = String(y.inactive);
+      // A character's MOD failed to load, not the character itself: other
+      // mods of the same character may still be configured. Keep the subject
+      // as "mod" in every locale; the reason lives here rather than the Go
+      // payload, which is shared verbatim with every language.
+      var inactiveLabel = {"zh-CN":"个角色的 mod 已改名或缺失（不再生效）","zh-TW":"個角色的 mod 已改名或缺失（不再生效）",en:" characters' mod renamed or missing (no longer active)",ja:"のキャラクターの mod が改名済みまたは見つからない（無効）",ko:" 캐릭터의 mod 이름 변경 또는 누락 (더 이상 적용 안 됨)"}[currentLanguage] || " characters' mod renamed or missing (no longer active)";
+      inactive = inactive.replace(/^(\d+)\s*个角色的 mod 未加载/, "$1" + inactiveLabel);
+      inactive = localizeNames(inactive);
+      rows.push(summaryRow(inactive));
+    }
+    if (y.skipped) {
+      // Deliberate _skipemote opt-outs are NOT failures. The subject is the
+      // mod the user marked, not the character that owns it; keep this
+      // wording neutral so a correct opt-out is never reported as an error.
+      var skipped = String(y.skipped);
+      var skippedLabel = {"zh-CN":"个角色的 mod 按 _skipemote 跳过","zh-TW":"個角色的 mod 依 _skipemote 略過",en:" characters' mod skipped by _skipemote",ja:"のキャラクターの mod が _skipemote でスキップ",ko:" 캐릭터의 mod가 _skipemote로 건너뜀"}[currentLanguage] || " characters' mod skipped by _skipemote";
+      skipped = skipped.replace(/^(\d+)\s*个角色的 mod 按 _skipemote 跳过/, "$1" + skippedLabel);
+      skipped = localizeNames(skipped);
+      rows.push(summaryRow(skipped));
+    }
+    return rows.join("") || summaryRow(r.done);
+  }
+
+  var pollTimer = null;
+
+  function schedulePoll(delay) {
+    if (pollTimer !== null) clearTimeout(pollTimer);
+    pollTimer = setTimeout(function () {
+      pollTimer = null;
+      poll();
+    }, delay);
+  }
+
+  function poll() {
+    api("/api/status").then(function (s) {
+      if (!primed) {
+        primed = true;
+        // First poll only: refill the folder from the last successful run.
+        // savedMods() already drops a stale path, so a remembered value is
+        // always one that existed -- the box is empty only on a true first
+        // run. Do not move this into apply(): a later poll must never
+        // overwrite the path the user is typing.
+        if (!addr.value && s.last_mods) addr.value = s.last_mods;
+        hint.textContent = s.root_ok ? "" : (LANG[currentLanguage] || LANG["zh-CN"]).root;
+
+        if (s.log_path) loghint.textContent = (LANG[currentLanguage] || LANG["zh-CN"]).log + s.log_path;
+      }
+      apply(s);
+
+      schedulePoll(running ? 250 : 1200);
+    }).catch(function () {
+
+      var msg = (LANG[currentLanguage] || LANG["zh-CN"]).disconnected;
+      if (dot) dot.className = "dot err";
+      if (statustext) statustext.textContent = msg;
+      if (pt) pt.textContent = msg;
+      schedulePoll(1500);
+    });
+  }
+
+  // ---- address bar: drop a folder ----------------------------------
+  // Chromium hides absolute paths from the DOM, so the drop is handed to the
+  // WebView2 host through postMessageWithAdditionalObjects; the host replies
+  // by calling window.onNativeDrop(realPaths). Only folders are accepted.
+  var dropWrap = addr ? addr.parentNode : null;
+  var dropDepth = 0;
+
+  function dropHint(text, warn) {
+    if (!hint) return;
+    hint.className = "hint" + (warn ? " warn" : "");
+    hint.textContent = text || "";
+  }
+
+  window.onNativeDrop = function (paths) {
+    if (dropWrap) dropWrap.classList.remove("dragover");
+    if (!paths || !paths.length) {
+      dropHint((LANG[currentLanguage] || LANG["zh-CN"]).dropFail, true);
+      return;
+    }
+    addr.value = paths[0];
+    dropHint("");
+  };
+
+  if (addr && dropWrap) {
+    dropWrap.addEventListener("dragenter", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      dropDepth++; dropWrap.classList.add("dragover");
+    });
+    dropWrap.addEventListener("dragover", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+    });
+    dropWrap.addEventListener("dragleave", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      dropDepth = Math.max(0, dropDepth - 1);
+      if (!dropDepth) dropWrap.classList.remove("dragover");
+    });
+    dropWrap.addEventListener("drop", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      dropDepth = 0; dropWrap.classList.remove("dragover");
+      // WebView2 does not reliably populate webkitGetAsEntry() for folders
+      // dragged from Explorer, so never gate the drop on it. Hand every
+      // dropped File to the native bridge, which resolves real disk paths
+      // through ICoreWebView2File.Path. resolveMods() rejects bad paths later.
+      var files = e.dataTransfer && e.dataTransfer.files;
+      var cw = window.chrome && window.chrome.webview;
+      if (!files || !files.length || !cw || !cw.postMessageWithAdditionalObjects) {
+        dropHint((LANG[currentLanguage] || LANG["zh-CN"]).dropNoBridge, true);
+        return;
+      }
+      dropHint((LANG[currentLanguage] || LANG["zh-CN"]).dropReading || "");
+      try {
+        cw.postMessageWithAdditionalObjects("__wwemote_drop__", files);
+      } catch (_) {
+        dropHint((LANG[currentLanguage] || LANG["zh-CN"]).dropNoBridge, true);
+      }
+    });
+  }
+
+  // A folder dropped ANYWHERE outside the address bar must never reach
+  // Chromium's default file-navigation handler: WebView2 tries to render the
+  // folder as a file:// directory and a giant white page covers the panel.
+  // The dropWrap handlers above stopPropagation for the address bar itself, so
+  // anything that reaches document here is outside the bar -> swallow it.
+  // The contains() check is a belt-and-braces guard in case propagation ever
+  // changes: drags genuinely over the bar keep working.
+  function inDropWrap(t) {
+    return !!(dropWrap && t && (t === dropWrap || dropWrap.contains(t)));
+  }
+  ["dragenter", "dragover", "dragleave", "drop"].forEach(function (type) {
+    // Capture phase: run before any region handler can stop propagation.
+    document.addEventListener(type, function (e) {
+      if (inDropWrap(e.target)) return;
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "none";
+    }, true);
+  });
+
+  browse.onclick = function () {
+    browse.disabled = true;
+    hint.className = "hint";
+    hint.textContent = "";
+    api("/api/pick-folder", { initial: addr.value || "" }).then(function (r) {
+      browse.disabled = false;
+      if (r && r.path) { addr.value = r.path; return; }
+
+      hint.className = "hint warn";
+      var t = LANG[currentLanguage] || LANG["zh-CN"];
+      hint.textContent = t.noDialog
+        + (r && r.error ? "（" + r.error + "）" : "")
+        + "，" + t.paste;
+      addr.focus();
+    }).catch(function () {
+      browse.disabled = false;
+      hint.className = "hint warn";
+      hint.textContent = (LANG[currentLanguage] || LANG["zh-CN"]).noBackend;
+      addr.focus();
+    });
+  };
+
+  function runJob() {
+    if (!addr.value.trim()) { addr.focus(); return; }
+    if (sumEl) sumEl.className = "summary";
+    lastSummary = null;
+    stickyError = "";
+    if (errEl) errEl.className = "errbox";
+    lastLogLen = 0; if (logEl) logEl.textContent = "";
+    job = "config"; setStepText(job);
+    setBusy(true, job, "running");
+    api("/api/start", {
+      mods: addr.value,
+      ignore_disabled: !!(optIgnore && optIgnore.checked),
+      clean_stale: !!(optClean && optClean.checked)
+    }).then(function (r) {
+      if (!r.ok) {
+        showError(r.error);
+        setBusy(false, job, "error");
+      }
+    }).catch(function (e) {
+      showError((LANG[currentLanguage] || LANG["en"]).offline + e);
+      setBusy(false, job, "error");
+    });
+  }
+
+  if (start) start.onclick = function () { runJob(); };
+
+  addr.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !running) start.click();
+  });
+
+  if (quitBtn) quitBtn.onclick = function () {
+    quitBtn.disabled = true;
+    api("/api/quit", {}).catch(function (e) {
+      quitBtn.disabled = false;
+      showError((LANG[currentLanguage] || LANG["en"]).closeFail + e);
+    });
+  };
+
+  if (language) {
+    var savedLanguage = "en";
+    try { savedLanguage = localStorage.getItem("wwemote-language") || localStorage.getItem("wuwaemote-language") || savedLanguage; } catch (_) {}
+    if (LANG[savedLanguage]) language.value = savedLanguage;
+    language.onchange = function () {
+      applyLanguage(language.value);
+      api("/api/language", { language: language.value }).catch(function () {});
+    };
+    applyLanguage(language.value || savedLanguage);
+
+    api("/api/language").then(function (r) {
+      if (r && LANG[r.language]) {
+        language.value = r.language;
+        applyLanguage(r.language);
+      }
+    }).catch(function () {});
+  }
+
+  // Checkbox choices are remembered locally, like the language. Restore on
+  // load and save on change; a missing/denied localStorage is non-fatal.
+  var OPT_KEY_IGNORE = "wwemote-ignore-disabled", OPT_KEY_STALE = "wwemote-clean-stale";
+  function restoreChecks() {
+    try {
+      if (optIgnore && localStorage.getItem(OPT_KEY_IGNORE) === "1") optIgnore.checked = true;
+      if (optClean && localStorage.getItem(OPT_KEY_STALE) === "1") optClean.checked = true;
+    } catch (_) {}
+  }
+  if (optIgnore) optIgnore.addEventListener("change", function () {
+    try { localStorage.setItem(OPT_KEY_IGNORE, optIgnore.checked ? "1" : "0"); } catch (_) {}
+  });
+  if (optClean) optClean.addEventListener("change", function () {
+    try { localStorage.setItem(OPT_KEY_STALE, optClean.checked ? "1" : "0"); } catch (_) {}
+  });
+  restoreChecks();
+
+  // Vertical-only window resize: the top/bottom strips call the Go binding
+  // with the edge and the pointer delta. screenY is used (not clientY) so the
+  // delta stays correct even after the window has moved under the cursor.
+  // Width is never touched by resizeHeight on the Go side.
+  (function () {
+    var top = $("resizeTop"), bottom = $("resizeBottom");
+    var active = null;
+    function start(edge) {
+      return function (e) {
+        if (e.button !== 0 || !window.resizeHeight) return;
+        e.preventDefault();
+        try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch (_) {}
+        active = { edge: edge, y: e.screenY };
+      };
+    }
+    function move(e) {
+      if (!active || !window.resizeHeight) return;
+      e.preventDefault();
+      // screenY is in CSS pixels; Win32 SetWindowPos works in physical pixels.
+      var dpr = window.devicePixelRatio || 1;
+      window.resizeHeight(active.edge, Math.round((e.screenY - active.y) * dpr));
+      active.y = e.screenY;
+    }
+    function end() {
+      if (!active) return;
+      active = null;
+      if (window.commitWindowHeight) window.commitWindowHeight().catch(function () {});
+    }
+    [top, bottom].forEach(function (el) {
+      if (!el) return;
+      el.addEventListener("mousedown", start(el === top ? "top" : "bottom"));
+      el.addEventListener("pointerdown", start(el === top ? "top" : "bottom"));
+    });
+    window.addEventListener("mousemove", move);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("mouseup", end);
+    window.addEventListener("pointerup", end);
+  })();
+
+  setStepText("config");
+  poll();
+})();
+</script>
+</body>
+</html>

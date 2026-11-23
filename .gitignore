@@ -1,0 +1,16 @@
+# Build outputs
+release/
+wwemote-test.exe
+*.exe
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# End-user data is generated locally and never belongs in this repo
+user/
+
+# Local editor / OS noise
+.DS_Store
+*.tmp
+*.bak
